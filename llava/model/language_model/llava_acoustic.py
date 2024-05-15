@@ -8,7 +8,7 @@ from transformers import AutoConfig, AutoModelForCausalLM, \
 
 from transformers.modeling_outputs import CausalLMOutputWithPast
 from transformers.generation.utils import GenerateOutput
-from acoustic_arch import AcousticMetaModel, AcousticMetaForCausalLM
+from llava.model.acoustic_arch import AcousticMetaModel, AcousticMetaForCausalLM
 
 
 class AcousticConfig(LlamaConfig):
@@ -138,5 +138,5 @@ class AcousticLlamaForCausalLM(LlamaForCausalLM, AcousticMetaForCausalLM):
             inputs['image_sizes'] = image_sizes
         return inputs
 
-AutoConfig.register("acoustic_llama", AcousticConfig)
+AutoConfig.register("llava_acoustic", AcousticConfig)
 AutoModelForCausalLM.register(AcousticConfig, AcousticLlamaForCausalLM)

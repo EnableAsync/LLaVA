@@ -17,6 +17,13 @@ class AcousticMetaModel:
         if hasattr(config, "acoustic"):
             self.acoustic_processor = None
             self.acoustic_projector = build_vision_projector(config, delay_load=True)
+    
+    def initialize_wav_processor(self, model_args):
+        pass
+
+    def get_acoustic_processor(self):
+        return "pain"
+
 
 class AcousticMetaForCausalLM(ABC):
 
@@ -25,7 +32,7 @@ class AcousticMetaForCausalLM(ABC):
         pass
 
     def get_acoustic_processor(self):
-        return self.acoustic_processor
+        return self.get_model().get_acoustic_processor()
     
     def encode_wavs(self, wavs):
         wav_features = self.get_model().get_acoustic_processor()(wavs)
