@@ -15,13 +15,45 @@ class AcousticMetaModel:
         super(AcousticMetaModel, self).__init__(config)
 
         if hasattr(config, "acoustic"):
-            self.acoustic_processor = None
+            self.acoustic_tower = None
             self.acoustic_projector = build_vision_projector(config, delay_load=True)
     
-    def initialize_wav_processor(self, model_args):
+    def initialize_wav_modules(self, model_args):
+        vision_tower = model_args.vision_tower
+        mm_vision_select_layer = model_args.mm_vision_select_layer
+        mm_vision_select_feature = model_args.mm_vision_select_feature
+        pretrain_mm_mlp_adapter = model_args.pretrain_mm_mlp_adapter
+        mm_patch_merge_type = model_args.mm_patch_merge_type
+    
+        self.config.use_mm_proj = True
+        self.config.mm_projector_type = getattr(model_args, 'mm_projector_type', 'linear')
+        self.config.mm_hidden_size = vision_tower.hidden_size
+        self.config.mm_vision_select_layer = mm_vision_select_layer
+        self.config.mm_vision_select_feature = mm_vision_select_feature
+        self.config.mm_patch_merge_type = mm_patch_merge_type
+
+        if getattr(self, 'mm_projector', None) is None:
+            self.mm_projector = build_vision_projector(self.config)
+
+            if 'unpad' in mm_patch_merge_type:
+                embed_std = 1 / torch.sqrt(torch.tensor(self.config.hidden_size, dtype=self.dtype))
+                self.image_newline = nn.Parameter(
+                    torch.randn(self.config.hidden_size, dtype=self.dtype) * embed_std
+                )
+        else:
+            # In case it is frozen by LoRA
+            for p in self.mm_projector.parameters():
+                p.requires_grad = True
+
+        if pretrain_mm_mlp_adapter is not None:
+            mm_projector_weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
+            def get_w(weights, keyword):
+                return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
+
+            self.mm_projector.load_state_dict(get_w(mm_projector_weights, 'mm_projector'))
         pass
 
-    def get_acoustic_processor(self):
+    def get_acoustic_tower(self):
         return "pain"
 
 
@@ -31,7 +63,7 @@ class AcousticMetaForCausalLM(ABC):
     def get_model(self):
         pass
 
-    def get_acoustic_processor(self):
+    def get_acoustic_tower(self):
         return self.get_model().get_acoustic_processor()
     
     def encode_wavs(self, wavs):
@@ -43,7 +75,7 @@ class AcousticMetaForCausalLM(ABC):
         self, input_ids, position_ids, attention_mask, past_key_values, labels,
         wavs, wav_sizes=None
     ):
-        wav_processor = self.get_acoustic_processor()
+        wav_processor = self.get_acoustic_tower()
         if wav_processor is None or wavs is None or input_ids.shape[1] == 1:
             return input_ids, position_ids, attention_mask, past_key_values, None, labels
 

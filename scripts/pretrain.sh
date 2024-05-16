@@ -12,12 +12,12 @@
 PROMPT_VERSION=plain
 ########### DO NOT CHANGE ###########
 
-deepspeed llava/train/train_mem.py \
+deepspeed train_mem_llava.py \
     --deepspeed ./scripts/zero2.json \
-    --model_name_or_path ./checkpoints/$MODEL_VERSION \
+    --model_name_or_path ../checkpoints/Llama-2-7b-chat-hf \
     --version $PROMPT_VERSION \
-    --data_path /path/to/pretrain_data.json \
-    --image_folder /path/to/images \
+    --data_path dataset/LLaVA-CC3M-Pretrain-595K/chat.json \
+    --image_folder dataset/LLaVA-CC3M-Pretrain-595K/images \
     --vision_tower openai/clip-vit-large-patch14 \
     --tune_mm_mlp_adapter True \
     --mm_vision_select_layer -2 \

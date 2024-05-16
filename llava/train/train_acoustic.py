@@ -58,7 +58,7 @@ class ModelArguments:
     freeze_backbone: bool = field(default=False)
     tune_mm_mlp_adapter: bool = field(default=False)
     vision_tower: Optional[str] = field(default=None)
-    wav_processor: bool = field(default=True)
+    wav_tower: Optional[str] = field(default=None)
     mm_vision_select_layer: Optional[int] = field(default=-1)   # default to the last layer
     pretrain_mm_mlp_adapter: Optional[str] = field(default=None)
     mm_projector_type: Optional[str] = field(default='linear')
@@ -815,7 +815,7 @@ def train(attn_implementation=None):
             )
         ))
 
-    if model_args.wav_processor:
+    if model_args.vision_tower is not None:
         if 'mpt' in model_args.model_name_or_path:
             config = transformers.AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=True)
             config.attn_config['attn_impl'] = training_args.mpt_attn_impl
@@ -909,13 +909,13 @@ def train(attn_implementation=None):
         else:
             conversation_lib.default_conversation = conversation_lib.conv_templates["vicuna_v1"]
 
-    if model_args.wav_processor:
-        model.get_model().initialize_wav_processor(
+    if model_args.wav_tower is not None:
+        model.get_model().initialize_wav_modules(
             model_args=model_args
         )
 
-        wav_processor = model.get_acoustic_processor()
-        data_args.wav_processor = wav_processor.wav_processor
+        wav_processor = model.get_acoustic_tower()
+        # data_args.wav_processor = wav_processor.wav_processor
         data_args.is_multimodal = True
 
         # model.config.image_aspect_ratio = data_args.image_aspect_ratio # TODO: 换成采样率

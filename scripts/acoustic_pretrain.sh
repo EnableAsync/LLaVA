@@ -14,12 +14,12 @@ PROMPT_VERSION=plain
 
 deepspeed --num_gpus=1 train_mem.py \
     --deepspeed ./scripts/zero2.json \
-    --model_name_or_path ../Llama-2-7b-chat-hf \
+    --model_name_or_path ../checkpoints/llama-7b \
     --version $PROMPT_VERSION \
     --data_path /path/to/pretrain_data.json \
     --image_folder /path/to/images \
     --vision_tower openai/clip-vit-large-patch14 \
-    --wav_processor \
+    --wav_tower stft \
     --tune_mm_mlp_adapter True \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \
